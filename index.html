@@ -3,11 +3,11 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Custom Event Test</title>
-
+    <title>Custom Journey Builder Activity</title>
+   
+    <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/require.js"></script>
-	<script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/postmonger.js"></script>
+ <script type="text/javascript" src="js/postmonger.js"></script>
     <script type="text/javascript">
         (function() {
             var config = {
@@ -25,11 +25,8 @@
     <!--Styles-->
     <style type="text/css">
         body {
-            padding: 15px;
+            padding: 20px;
             margin: 0;
-        }
-        h1 {
-            font-size: 16px;
         }
         .step {
             display: none;
@@ -42,27 +39,55 @@
 </head>
 <body>
 <div id="step1" class="step">
-    <h1>Step 1: Country Code</h1>
-    <select id="select-country-code">
-        <option value="US">United States</option>
-        <option value="GB">United Kingdom</option>
-        <option value="BR">Brazil</option>
-        <option value="DE">Germany</option>
+<table cellspacing="2">
+<tr>
+	<td>Select Journey type:</td>
+	<td><select id="journeytype">
+        <option value="">Select a Journey type</option>
+        <option value="cold">Cold</option>
+        <option value="warm">Warm</option>
+        <option value="hot">Hot</option>
+    </select></td>
+</tr>
+<tr>
+	<td>Select Log type:</td>
+	<td>
+	<select required id="entrytype">
+	  <option value="">Select a Log type</option>
+       <option value="entry">Entry</option>
+        <option value="exit">Exit</option>
     </select>
-    <br />
-    <button id="toggleLastStep">Toggle Favorite Food Step</button>
+	</td>
+</tr>
+<tr>
+	<td>Objective:</td>
+	<td>
+	<select required id="objective">
+	<option value="">Select Objective</option>
+       <option value="met">Met</option>
+        <option value="notmet">Not Met</option>
+    </select>
+	</td>
+</tr>
+<tr>
+	<td>Reason:</td>
+	<td>
+	<input name="reason" id="reason" maxlength="200" size="40" value="" type="text"/>
+	</td>
+</tr>
+<tr>
+	<td colspan="2"><br/><br/><br/><div id="message1"></div></td>
+	
+</tr>
+</table>
+ 
+
+   
 </div>
 <div id="step2" class="step">
-    <h1>Step 2: First Name</h1>
-    <input id="select-first-name">
+    Here is your selected values <br/><br/>
+	<div id="message"></div>
 </div>
-<div id="step3" class="step">
-    <h1>Step 3: Last Name</h1>
-    <input id="select-last-name">
-</div>
-<div id="step4" class="step">
-    <h1>Step 4: Favorite Food</h1>
-    <input id="select-favorite-food">
-</div>
+
 </body>
 </html>
