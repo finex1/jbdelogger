@@ -1,64 +1,116 @@
 {
     "workflowApiVersion": "1.1",
     "metaData": {
-        "icon": "images/icon.png",
-        "transactionKeys": {
-            "0": {
-                "from": "Event Property",
-                "to": "DE_Name.DE_Property"
-            }
+       "icon": "images/icon.png",
+       "category": "message"
+    },
+    "type": "REST",
+    "lang": {
+       "en-US": {
+           "name": "JB DE Logger",
+           "description": "Used to log customers before exiting a journey",
+		   "JourneyTypeLabel": "Select the journey type",
+		   "entryTypeLabel": "Is it a journey entry or exit DE log",
+		   "objectiveLabel": "Has the journey objective been met or not met",
+		   "reasonLabel": "Add a reason"
+       }
+    },
+    "arguments": {
+        "execute": {
+            "inArguments": [
+                {
+                    "emailAddress": "{{InteractionDefaults.Email}}"
+                },
+                {
+                    "phoneNumber": "{{Contact.Default.PhoneNumber}}"
+                }
+            ],
+            "outArguments": [
+                {
+                    "foundSignupDate": ""
+                }
+            ],
+            "url": "https://jbdelogger1.herokuapp.com/execute"
         }
     },
-    "type": "Event",
-    "lang":{
-        "en-US": {
-            "name": "Event (Workflow API v1.1)",
-            "description": "An example event using workflow API v1.1 format.",
-            "selectCountry": "Select Country",
-            "enterFirstName": "Enter First Name",
-            "enterLastName": "Enter Last Name",
-            "enterFavoriteFood": "Enter Favorite Food",
-            "countryCodeLabel": "Country Code",
-            "firstNameLabel": "First Name",
-            "lastNameLabel": "Last Name",
-            "favoriteFoodLabel": "Favorite Food",
-            "selectTransactionKeyMapping": "Transaction Key"
-        }
+    "configurationArguments": {
+	"applicationExtensionKey": "387a310e-d606-41cb-a879-a4760b8f5eb9",
+       "save": {
+           "url": "URI/for/your/activity/save"
+       },
+       "publish": {
+           "url": "https://jbdelogger1.herokuapp.com/"
+       },
+       "validate": {
+           "url": "URI/for/your/activity/validate"
+       },
+       "stop": {
+           "url": "URI/for/your/activity/stop"
+       }
     },
-    "configurationArguments": {},
-    "filterExpressionEnabled": false,
     "wizardSteps": [
-        { "key": "selectCountry", "label": "selectCountry" },
-        { "key": "enterFirstName", "label": "enterFirstName" },
-        { "key": "enterLastName", "label": "enterLastName" },
-        { "key": "enterFavoriteFood", "label": "enterFavoriteFood", "active": false },
-        { "key": "selectTransactionKeyMapping", "label": "selectTransactionKeyMapping" }
+       { "label": "Step 1", "key": "step1" },
+       { "label": "Step 2", "key": "step2" }       
     ],
     "userInterfaces": {
-        "configModal": {
-            "url": "index.html"
-        },
-        "summary": [
+       "configModal": {
+           "height": 200,
+           "width": 300,
+           "fullscreen": true
+       },
+		"runningModal": {
+        "url": "index.html"
+    },
+    "runningHover": {
+        "url": "index.html"
+    },"summary": [
             {
-                "valuePath": "arguments.countryCode",
-                "label": "countryCodeLabel"
+                "valuePath": "arguments.journeytype",
+                "label": "JourneyTypeLabel"
             },
             {
-                "valuePath": "arguments.firstName",
-                "label": "firstNameLabel"
+                "valuePath": "arguments.entrytype",
+                "label": "entryTypeLabel"
             },
             {
-                "valuePath": "arguments.lastName",
-                "label": "lastNameLabel"
+                "valuePath": "arguments.objective",
+                "label": "objectiveLabel"
             },
             {
-                "valuePath": "arguments.favoriteFood",
-                "label": "favoriteFoodLabel"
-            },
-             {
-                "valuePath": "metaData.transactionKeys",
-                "label": "Transaction Key"
+                "valuePath": "arguments.reason",
+                "label": "reasonLabel"
             }
-        ]
+			]
+    },
+    "schema": {
+        "arguments": {
+            "execute": {
+                "inArguments": [
+                    {
+                        "phoneNumber": {
+                            "dataType": "Phone",
+                            "isNullable": false,
+                            "direction": "in"   
+                        }
+                    },
+                    {
+                        "emailAddress": {
+                            "dataType": "Email",
+                            "isNullable": false,
+                            "direction": "in"
+                        }
+                    }
+                ],
+                "outArguments": [
+                    {
+                        "foundSignupDate": {
+                            "dataType": "Date",
+                            "direction": "out",
+                            "access": "visible"
+                        }
+                    }
+                ]
+            }
+        }
     }
 }

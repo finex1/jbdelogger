@@ -1,24 +1,24 @@
 define([
-    'js/postmonger'
+    'postmonger'
 ], function(
     Postmonger
 ) {
     'use strict';
-
+    //var prodEnv = require('prod.env')
+	//alert(JSON.stringify(prodEnv.env.clientid));
     var connection = new Postmonger.Session();
+	var authTokens = {};
     var payload = {};
-    var lastStepEnabled = false;
+    
     var steps = [ // initialize to the same value as what's set in config.json for consistency
-        { "key": "selectCountry", "label": "selectCountry" },
-        { "key": "enterFirstName", "label": "enterFirstName" },
-        { "key": "enterLastName", "label": "enterLastName" },
-        { "key": "enterFavoriteFood", "label": "enterFavoriteFood", "active": false }
+        { "label": "Step 1", "key": "step1" },
+        { "label": "Step 2", "key": "step2" }
     ];
     var currentStep = steps[0].key;
 
     $(window).ready(onRender);
 
-    connection.on('initEvent', initialize);
+    connection.on('initActivity', initialize);
     connection.on('requestedTokens', onGetTokens);
     connection.on('requestedEndpoints', onGetEndpoints);
 
@@ -26,38 +26,106 @@ define([
     connection.on('clickedBack', onClickedBack);
     connection.on('gotoStep', onGotoStep);
 
-    function initialize (data) {
-        var countryCode;
-        var firstName;
-        var lastName;
+    function onRender() {
+        // JB will respond the first time 'ready' is called with 'initActivity'
+        connection.trigger('ready');
 
+        connection.trigger('requestTokens');
+        connection.trigger('requestEndpoints');
+		
+      
+        // Disable the next button if a value isn't selected
+        $('#journeytype').change(function() {
+			 var filledform = getMessage();
+			 if ((filledform.filled)) {
+            console.log(filledform);
+        }else{
+			filledform = getMessage();
+		}
+			
+            //var message = getMessage();
+			
+            connection.trigger('updateButton', { button: 'next', enabled: Boolean(filledform.filled) });
+
+            $('#message1').html("Fill all the relevant fields and click Next when you ready");
+        });
+
+     
+    }
+
+    function initialize (data) {
+		var journeytype;
+        var entrytype;
+        var objective;
+		var reason;
+		
         if (data) {
             payload = data;
+			
         }
 
-        if (payload['arguments']) {
-            countryCode = payload['arguments'].countryCode;
-            firstName = payload['arguments'].firstName;
-            lastName = payload['arguments'].lastName;
-        }
+        var message;
+        var hasInArguments = Boolean(
+            payload['arguments'] &&
+            payload['arguments'].execute &&
+            payload['arguments'].execute.inArguments &&
+            payload['arguments'].execute.inArguments.length > 0
+        );
 
-        $('#select-country-code').val(countryCode);
-        $('#select-first-name').val(firstName);
-        $('#select-last-name').val(lastName);
+        var inArguments = hasInArguments ? payload['arguments'].execute.inArguments : {};
+
+        $.each(inArguments, function(index, inArgument) {
+            $.each(inArgument, function(key, val) {
+                if (key === 'journeytype') {
+                    journeytype = val;
+                }else if (key === 'entrytype') {
+					entrytype = val;
+				}else if (key === 'objective') {
+					objective = val;
+				}else if (key === 'reason') {
+					reason = val;
+				}
+            });
+        });
+			$('#journeytype').val(journeytype);
+			$('#entrytype').val(entrytype);
+			$('#objective')	.val(objective);	
+			$('#reason').val(reason);
+
+
+		
+		
+        // If there is no message selected, disable the next button
+        if (!journeytype) {
+            showStep(null, 1);
+            connection.trigger('updateButton', { button: 'next', enabled: false });
+            // If there is a message, skip to the summary step
+        } else {
+          var filledform = getMessage();
+            $('#message').html(filledform.journeytype+"<br/>"+filledform.entrytype+"<br/>"+filledform.objective+"<br/>"+filledform.reason);
+            showStep(null, 2);
+        }
     }
 
     function onGetTokens (tokens) {
         // Response: tokens = { token: <legacy token>, fuel2token: <fuel api token> }
         // console.log(tokens);
+		 //console.log(tokens);
+       // authTokens = tokens;
+	//	alert(JSON.stringify(authTokens));
     }
 
     function onGetEndpoints (endpoints) {
         // Response: endpoints = { restHost: <url> } i.e. "rest.s1.qa1.exacttarget.com"
         // console.log(endpoints);
+		 console.log(endpoints);
     }
 
     function onClickedNext () {
-        if ((currentStep.key === 'enterLastName' && steps[3].active === false) || currentStep.key === 'enterFavoriteFood') {
+        if (
+            (currentStep.key === 'step1' && steps[1].active === false) ||
+            currentStep.key === 'step2'
+        ) {
             save();
         } else {
             connection.trigger('nextStep');
@@ -73,20 +141,6 @@ define([
         connection.trigger('ready');
     }
 
-    function onRender() {
-        connection.trigger('ready'); // JB will respond the first time 'ready' is called with 'initEvent'
-
-        connection.trigger('requestTokens');
-        connection.trigger('requestEndpoints');
-
-        $('#toggleLastStep').click(function() {
-            lastStepEnabled = !lastStepEnabled; // toggle status
-            steps[3].active = !steps[3].active; // toggle active
-
-            connection.trigger('updateSteps', steps);
-        });
-    }
-
     function showStep(step, stepIndex) {
         if (stepIndex && !step) {
             step = steps[stepIndex-1];
@@ -97,49 +151,68 @@ define([
         $('.step').hide();
 
         switch(currentStep.key) {
-            case 'selectCountry':
+            case 'step1':
                 $('#step1').show();
+                connection.trigger('updateButton', {
+                    button: 'next',
+                    enabled: Boolean(getMessage())
+                });
+                connection.trigger('updateButton', {
+                    button: 'back',
+                    visible: false
+                });
                 break;
-            case 'enterFirstName':
+            case 'step2':
                 $('#step2').show();
-                $('#step2 input').focus();
+                connection.trigger('updateButton', {
+                    button: 'back',
+                    visible: true
+                });
+                connection.trigger('updateButton', {
+                        button: 'next',
+                        text: 'done',
+                        visible: true
+                    });
                 break;
-            case 'enterLastName':
-                $('#step3').show();
-                $('#step3 input').focus();
-                break;
-            case 'enterFavoriteFood':
-                $('#step4').show();
-                $('#step4 input').focus();
-                break;
+            
         }
     }
 
     function save() {
-        var countryCode = $('#select-country-code').find('option:selected').attr('value');
-        var firstName = $('#select-first-name').val();
-        var lastName = $('#select-last-name').val();
-        var favoriteFood = $('#select-favorite-food').val();
+        var name = $('#journeytype').find('option:selected').html();
+        var value = getMessage();
 
-        payload['arguments'] = payload['arguments'] || {};
-        payload['arguments'].countryCode = countryCode;
-        payload['arguments'].firstName = firstName;
-        payload['arguments'].lastName = lastName;
+        // 'payload' is initialized on 'initActivity' above.
+        // Journey Builder sends an initial payload with defaults
+        // set by this activity's config.json file.  Any property
+        // may be overridden as desired.
+      payload.name = name;
+console.log(name);
+        payload['arguments'].execute.inArguments = [{ "message": value }];
 
-        // Example criteria - if 'filterExpressionEnabled' is set to true in config.json, Journey Builder will
-        // populate this step with the 'criteria' XML passed here
-        // payload['arguments'].criteria = "<FilterDefinition Source='SubscriberAttribute'><ConditionSet Operator='AND' ConditionSetName='Grouping'><Condition ID='13D65BB5-1F98-E411-9D68-00237D5401CE' isParam='false' Operator='Equal' operatorEditable='0' valueEditable='1' annotation=''><Value><![CDATA[" + countryCode + "]]></Value></Condition><Condition ID='0CD65BB5-1F98-E411-9D68-00237D5401CE' isParam='false' Operator='Equal' operatorEditable='0' valueEditable='1' annotation=''><Value><![CDATA[" + firstName + "]]></Value></Condition><Condition ID='12D65BB5-1F98-E411-9D68-00237D5401CE' isParam='false' Operator='Equal' operatorEditable='0' valueEditable='1' annotation=''><Value><![CDATA[" + lastName + "]]></Value></Condition></ConditionSet></FilterDefinition>";
+        payload['metaData'].isConfigured = true;
 
-        if (favoriteFood && steps[3].active) {
-            payload['arguments'].favoriteFood = favoriteFood;
-        }
-
-        payload['metaData'] = payload['metaData'] || {};
-
-        payload['configurationArguments'] = payload['configurationArguments'] || {};
-
-        payload.dataExtensionId = '<data extension ID>';
-
-        connection.trigger('updateEvent', payload);
+        connection.trigger('updateActivity', payload);
     }
+
+    function getMessage() {
+		 var formvalues = {
+            journeytype: "",
+            entrytype: "",
+            objective: "",
+            reason: "",
+			filled:false
+
+        };
+        formvalues.journeytype = $('#journeytype').find('option:selected').attr('value').trim();
+		formvalues.entrytype = $('#entrytype').find('option:selected').attr('value').trim();
+		formvalues.objective = $('#objective').find('option:selected').attr('value').trim();
+		formvalues.reason = $('#reason').val();
+		if ((formvalues.journeytype)&& (formvalues.entrytype)&& ((formvalues.objective)|| (formvalues.reason))){
+			formvalues.filled = true;
+		}
+		
+		return formvalues;
+    }
+
 });
